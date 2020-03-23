@@ -1,0 +1,73 @@
+import ConsolPages
+from pytest_testrail.plugin import pytestrail
+
+
+@pytestrail.case('C1197')
+def test_copy_trip(login_logout):
+    login = ConsolPages.AllUsersLogin(login_logout)
+    user = ConsolPages.User(login_logout)
+    try:
+        login.user()
+        event = user.add_business_trip_local()
+        user.home_page()
+        copy_event = user.copy_event(event[1])
+        assert copy_event is not None, 'Не удалось скопировать командировку'
+        print('Копирование командировки [3.2.7]')
+    finally:
+        user.logout()
+
+
+@pytestrail.case('C1199')
+def test_view_trip(login_logout):
+    login = ConsolPages.AllUsersLogin(login_logout)
+    user = ConsolPages.User(login_logout)
+    try:
+        login.user()
+        fields = user.view_event()
+        assert fields == 10, 'Не удалось зайти на страницу просмотра командировки'
+        print('Просмотр командировки/иного мероприятия [3.2.12]')
+    finally:
+        user.logout()
+
+
+@pytestrail.case('C1202')
+def test_view_expense(login_logout):
+    login = ConsolPages.AllUsersLogin(login_logout)
+    user = ConsolPages.User(login_logout)
+    try:
+        login.user()
+        user.add_expense()
+        user.home_page()
+        fields = user.view_expense()
+        assert fields == 4, 'Не удалось зайти на страницу просмотра заявки на расход'
+        print('Просмотр заявки на расход [3.3.1]')
+    finally:
+        user.logout()
+
+
+@pytestrail.case('C1203')
+def test_delete_expense(login_logout):
+    login = ConsolPages.AllUsersLogin(login_logout)
+    user = ConsolPages.User(login_logout)
+    try:
+        login.user()
+        deleted_expense = user.delete_expense()
+        assert deleted_expense == 0, 'Не удалось удалить заяку на расход'
+        print('Удаление заявки на расход [3.3.2]')
+    finally:
+        user.logout()
+
+
+@pytestrail.case('C1206')
+def test_view_actual_expense(login_logout):
+    login = ConsolPages.AllUsersLogin(login_logout)
+    user = ConsolPages.User(login_logout)
+    try:
+        login.user()
+        user.add_actual_expense()
+        user.home_page()
+        fields = user.view_actual_expense()
+        assert fields == 4, 'Не удалось зайти на страницу просмотра фактического расхода'
+        print('Просмотр фактического расхода [3.3.5]')
+    finally:
+        user.logout()
