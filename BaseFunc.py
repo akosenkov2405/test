@@ -7,7 +7,7 @@ from selenium.common.exceptions import TimeoutException
 class StartPage():
     def __init__(self, driver):
         self.driver = driver
-        self.start_url = 'https://demo_ems.continent.ru/#/login'
+        self.start_url = 'урл проекта'
 
     def find_element(self, locator, time=3):
         return WebDriverWait(self.driver, time).until(EC.presence_of_element_located(locator),
