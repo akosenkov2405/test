@@ -1,0 +1,928 @@
+from BaseFunc import StartPage
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+import gmail_fin1
+import gmail_utv1
+import time
+import random
+import os
+from datetime import date
+from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import ElementClickInterceptedException
+
+admin_start_url = 'https://demo_ems.continent.ru/#/domains'
+start_url = 'https://demo_ems.continent.ru/#/home'
+start_login_url = 'https://demo_ems.continent.ru/#/login'
+
+
+class UsersData:
+    domain = 'test_inc'
+    user_login = 'us1'
+    user_password = '12345'
+    approver_login = 'utv1'
+    approver_password = '12345'
+    financier_login = 'fin1'
+    financier_password = '12345'
+    assistant_login = 'as1'
+    assistant_password = '12345'
+    admin_login = 'admin'
+    admin_password = '12345'
+    super_admin_login = 'admin'
+    super_admin_password = '12345'
+    reports_login = 'ois1'
+    reports_password = '12345'
+    multiaccount_login = 'multi'
+    multiaccount_password = '12345'
+    approver_email = 'ems.consol.approver@gmail.com'
+    financier_email = 'ems.consol.financier@gmail.com'
+
+
+class LoginPageLocators:
+    domain_field = (By.NAME, 'domain')
+    login_field = (By.NAME, 'username')
+    password_field = (By.NAME, 'password')
+    reset_password = (By.XPATH, "//a[text()='Восстановить пароль']")
+    email_field = (By.NAME, 'email')
+    back_to_login = (By.XPATH, '//*[text()="Вернуться ко входу"]')
+    login_button = (By.XPATH, "//button[text()='Войти']")
+    login_text = (By.XPATH, "//*[text()='Добро пожаловать в EMS']")
+    logout_icon = (By.XPATH, "//*[@alt='Выйти']/..")
+    operation_success = (By.XPATH, "//*[text()='Операция прошла успешно']")
+    operation_failed = (By.XPATH, "//*[text()='Операция завершилась с ошибкой']")
+    send_password_btn = (By.XPATH, "//button[text() = 'Далее']")
+    password_confirmation = (By.XPATH, "//*[@name = 'password_confirmation']")
+    password = (By.XPATH, "//*[@name = 'password']")
+    change_password_btn = (By.XPATH, "//*[text() = 'Сменить']")
+    start_page_h1 = (By.XPATH, "//h1[text() = 'Welcome to CEX']")
+
+
+class HeaderLocators:
+    header_logo = (By.XPATH, "//*[@alt = 'Логотип']")
+    modal_loader = (By.XPATH, "//div[@class='modal-loader']")
+    notifications = (By.XPATH, "//*[@class ='notification-message']")
+    notification_animation_main = (By.XPATH, "//*[@class = 'animated fadeInDown notification-item notification-success n-child']")
+    notification_animation_right_out = (By.XPATH, "//*[@class='animated fadeOutRight notification-item notification-success n-child']")
+
+
+def choose_company(event):
+    """Наведение на меню 'Действия' и нажатие на 'Выбрать'"""
+    event.find_element_invisible_off(HeaderLocators.modal_loader)
+    drop_menu = event.find_element(Actions.action_menu)
+    choose_company = event.find_element(AdminLocators.action_choose)
+    event.driver.execute_script("arguments[0].scrollIntoView();", drop_menu)
+    actions = event.action_chains()
+    actions.pause(0.1)
+    actions.click(drop_menu)
+    actions.move_to_element(drop_menu)
+    actions.pause(0.1)
+    actions.move_to_element_with_offset(drop_menu, 0, 35)
+    actions.move_to_element(choose_company)
+    actions.click(choose_company)
+    actions.perform()
+    print('Компания выбрана [2.10.0]')
+
+
+def select_edit_event(event):
+    try:
+        menu = event.find_element(Actions.action)
+        menu_edit = event.find_element(Actions.action_edit_trip)
+        event.driver.execute_script("arguments[0].scrollIntoView();", menu)
+        actions = StartPage.action_chains(event)
+        actions.pause(0.1)
+        actions.click(menu)
+        actions.move_to_element(menu)
+        actions.pause(0.1)
+        actions.move_to_element_with_offset(menu, 0, 35)
+        actions.move_to_element(menu_edit)
+        actions.pause(0.1)
+        actions.click(menu_edit)
+        actions.perform()
+    except TimeoutException:
+        print('Не найдено командировок')
+        event.find_element(Actions.action)
+
+
+def select_comment_event(event):
+    menu = event.find_element(Actions.action)
+    menu_comment = event.find_element(Actions.action_comment)
+    actions = StartPage.action_chains(event)
+    actions.move_to_element(menu)
+    actions.click(menu)
+    actions.pause(0.2)
+    actions.move_to_element_with_offset(menu, 0, 35)
+    actions.move_to_element(menu_comment)
+    actions.pause(0.2)
+    actions.click(menu_comment)
+    actions.perform()
+
+
+def random_holding_name():
+    holding_name_int = str(random.randint(0, 999999))
+    holding_url_int = holding_name_int
+    holding_name = 'Тестовая компания' + holding_url_int
+    holding_url = 'test_test' + holding_url_int
+    return holding_name, holding_url
+
+
+def random_company():
+    company_name_int = str(random.randint(0, 999999))
+    inn_int = str(random.randint(1000000000, 9999999999))
+    kpp_int = str(random.randint(100000000, 999999999))
+    prefConsumption_int = 'testPrefConsumption' + company_name_int
+    prefAO_int = 'testPrefAO' + company_name_int
+    prefEvent_int = 'testPrefEvent' + company_name_int
+    return inn_int, kpp_int, prefConsumption_int, prefAO_int, prefEvent_int
+
+
+def random_subdivision():
+    name = str(random.randint(0, 999999))
+    sub_num = str(random.randint(0, 999999))
+    sub_name = 'Тестовое подразделение' + name
+    return sub_name, sub_num
+
+
+def random_employee():
+    group = list('абвгдежзийклмнопрстуфхцчшщъыьэюя')
+    random_name_list = random.choices(group, k=8)
+    random_name = ''.join(random_name_list)
+    return random_name
+
+
+def system_date():
+    current = str(date.today()).split('-')
+    current.reverse()
+    current_format = current
+    current_format_str = str(current_format[0]) + '/' + str(current_format[1]) + '/' + str(current_format[2])
+    current_format_plus = str(current_format[0]) + '/' + str(current_format[1]) + '/' + str(current_format[2])
+    report_start_date = str(current_format[0]) + '.' + str(current_format[1]) + '.' + str(current_format[2])
+    report_end_date = str(current_format[0]) + '.' + str(current_format[1]) + '.' + str(current_format[2])
+    return current_format_str, current_format_plus, report_start_date, report_end_date
+
+
+def save_modal_no(driver):
+    try:
+        driver.find_element(ProgressModal.modal_save_progress)
+        driver.find_element(ProgressModal.modal_button_no).click()
+        driver.find_element_invisible_off(HeaderLocators.modal_loader)
+        print('Действие не выполнено, одно из полей не удалось заполнить')
+    except TimeoutException:
+        pass
+
+
+class SuperAdminLocators:
+    profile_name = (By.XPATH, "//div[@class = 'dropdown__toggle-button']")
+    group_of_companies = (By.XPATH, "//h2[text()='Группы компаний']")
+    group_of_companies_edit = (By.XPATH, "//h1[text() = 'Редактирование группы компаний']")
+    add_button = (By.XPATH, "//button[text()='Создать группу компаний']")
+    add_group_page = (By.XPATH, "//h1[text()='Добавление группы компаний']")
+    # Страница добавления холдинга
+    company_field = (By.XPATH, "//div[@class ='Select-input']/input")
+    name_field = (By.XPATH, "//input[@name ='name']")
+    name_field_en = (By.XPATH, "//input[@name ='nameEn']")
+    url_name = (By.XPATH, "//input[@name ='urlName']")
+    admin_email = (By.XPATH, "//input[@name ='adminEmail']")
+    url_time = (By.XPATH, "//input[@name ='tokenTtlSec']")
+    deadline_travel = (By.XPATH, "//input[@name ='deadlineTravelExpenseReport']")
+    deadline_travel_other = (By.XPATH, "//input[@name ='deadlineOtherExpenseReport']")
+    additional_data = (By.XPATH, "//button[text() ='Дополнительные данные']")
+    phone = (By.XPATH, "//input[@name ='phoneNumber']")
+    site = (By.XPATH, "//input[@name ='site']")
+    password_age = (By.XPATH, "//input[@name ='passwordRequirement.maxAgeDay']")
+    password_notification = (By.XPATH, "//input[@name ='passwordRequirement.expireWarningDay']")
+    password_len_max = (By.XPATH, "//input[@name ='passwordRequirement.maxLength']")
+    password_len_min = (By.XPATH, "//input[@name ='passwordRequirement.minLength']")
+    save_button = (By.XPATH, "//button[text()= 'Сохранить']")
+    list_companies_url = (By.XPATH, "//a[text() = 'Список групп компаний']")
+    table_name = "//a[text() = '{}']"
+    table_url_name = "//td[text() = '{}']"
+    assert_value = "//input[@value = '{}']"
+    # Активация/Деактивация
+    table_holding_name = (By.XPATH, "//a[contains(@href, 'domains/edit')]")
+    activation_deactivation_button = (By.XPATH, "//button[text()='Деактивировать/Восстановить']")
+    button_yes = (By.XPATH, "//button[text()='Да']")
+    pagination_next = (By.XPATH, "//a[text() = '→']")
+    pagination_prev = (By.XPATH, "//a[text() = '←']")
+    main_page_add_button = (By.XPATH, "//button[contains(text() , 'Создать группу')]")
+
+
+class AdminLocators:
+    companies_list = (By.XPATH, "//h2[text()='Список компаний']")
+    add_company_button = (By.XPATH, "//button[text()='Добавить компанию']")
+    add_company_page_name = (By.XPATH, "//h1[text()='Добавить новую компанию']")
+    # Страница добавления компании
+    legal_form = (By.XPATH, "//div[@class ='Select-input']/input")
+    company_name = (By.XPATH, "//input[@name ='name']")
+    company_name_en = (By.XPATH, "//input[@name ='nameEn']")
+    additional_data_1 = (By.XPATH, "//button[text() ='Дополнительные данные'][1]")
+    shortname = (By.XPATH, "//input[@name ='shortName']")
+    shortname_en = (By.XPATH, "//input[@name ='shortNameEn']")
+    INN = (By.XPATH, "//input[@name ='inn']")
+    KPP = (By.XPATH, "//input[@name ='kpp']")
+    prefixConsumption = (By.XPATH, "//input[@name ='prefixConsumptionRequest']")
+    prefixAO = (By.XPATH, "//input[@name ='prefixAdvanceReport']")
+    prefixEvent = (By.XPATH, "//input[@name ='prefixBusinessEvent']")
+    additional_data_2 = (By.XPATH, "//button[text() ='Дополнительные данные'][2]")
+    registration_date = (By.XPATH, "//div[@class = 'label' and text() = 'Дата регистрации']/..//input")
+    kpp_date = (By.XPATH, "//div[@class = 'label' and text() = 'Дата изменения KPP']/..//input")
+    OGRN = (By.XPATH, "//input[@name ='ogrn']")
+    city = (By.XPATH, "//div[@class = 'label' and text() = 'Город']/..//input[@role]")
+    street = (By.XPATH, "//div[@class = 'label' and text() = 'Улица']/..//input[@role]")
+    house = (By.XPATH, "//div[@class = 'label' and text() = 'Дом']/..//input[@role]")
+    legal_adress = (By.XPATH, "//button[text() ='Точный адрес']")
+    ownership = (By.XPATH, "//input[@name = 'legalAddress.ownership']")
+    house_ownership = (By.XPATH, "//input[@name = 'legalAddress.houseOwnership']")
+    korp = (By.XPATH, "//input[@name = 'legalAddress.housing']")
+    building = (By.XPATH, "//input[@name = 'legalAddress.building']")
+    litera = (By.XPATH, "//input[@name = 'legalAddress.literature']")
+    construction = (By.XPATH, "//input[@name = 'legalAddress.construction']")
+    land = (By.XPATH, "//input[@name = 'legalAddress.plotOfLand']")
+    apartment = (By.XPATH, "//input[@name = 'legalAddress.apartment']")
+    office = (By.XPATH, "//input[@name = 'legalAddress.office']")
+    box = (By.XPATH, "//input[@name = 'legalAddress.box']")
+    quarters = (By.XPATH, "//input[@name = 'legalAddress.quarters']")
+    room = (By.XPATH, "//input[@name = 'legalAddress.room']")
+    floor = (By.XPATH, "//input[@name = 'legalAddress.floor']")
+    index = (By.XPATH, "//div[@class = 'label' and text() = 'Почтовый индекс']/..//input[@role]")
+    additional_info = (By.XPATH, "//button[text() ='Дополнительная информация']")
+    head_name = (By.XPATH, "//input[@name = 'headName']")
+    head_position = (By.XPATH, "//input[@name = 'headPosition']")
+    phone = (By.XPATH, "//input[@name = 'phoneNumber']")
+    email = (By.XPATH, "//input[@name = 'email']")
+    site = (By.XPATH, "//input[@name = 'site']")
+    company_save_button = (By.XPATH, "//button[text() = 'Сохранить']")
+    companies_link = (By.XPATH, "//a[text() = 'Профиль группы компаний']")
+    inn_kpp_assert = (By.XPATH, "//a[text() = 'Тестовая компания']/../div[@class = 'card__text card__text--right' and text() = '{}']")
+    # Уведомления
+    notification_icon = (By.XPATH, "//span[@class = 'notificationView big']")
+    disable_notifications = (By.XPATH, "//div[@class = 'row']//button[text() = 'Отключить уведомления']")
+    notifications_yes = (By.XPATH, "//button[text() = 'Да']")
+    enable_notifications = (By.XPATH, "//div[@class = 'row']//button[text() = 'Включить уведомления']")
+    # Структурные подразделения
+    action = (By.XPATH, "//div[@class ='card__actions actions']")
+    action_choose = (By.XPATH, "//div[@class ='card__actions actions']//button[text() = 'Выбрать']")
+    business_units = (By.XPATH, "//nav[@class = 'menu col']//a[text() = 'Структурные подразделения']")
+    add_subdivision_button = (By.XPATH, "//button[text() = 'Добавить']")
+    subdivision_name = (By.XPATH, "//input[@name = 'name']")
+    subdivision_additional = (By.XPATH, "//button[text() = 'Дополнительные данные']")
+    subdivision_num = (By.XPATH, "//input[@name = 'number']")
+    subdivision_save = (By.XPATH, "//button[text() = 'Сохранить']")
+    sub_page_name = (By.XPATH, "//h2[text() = 'Структурные подразделения']")
+    sub_add_page_name = (By.XPATH, "//h1[text() = 'Добавление структурного подразделения']")
+    sub_edit_page_name = (By.XPATH, "//h1[text() = 'Редактирование структурного подразделения']")
+    sub_table_name = (By.XPATH, "//a[contains(text(), '{}')]/../..//input")
+    sub_table_name_search = (By.XPATH, "//tr//a")
+    sub_deactivate_activate = (By.XPATH, "//button[text() = 'Деактивировать/Восстановить']")
+    sub_deactivate_activate_yes = (By.XPATH, "//button[text() = 'Да']")
+    # Добавление сотрудника
+    employee_link = (By.XPATH, "//a[text() = 'Список сотрудников']")
+    employee_page_name = (By.XPATH, "//h2[text() = 'Список сотрудников компании']")
+    employee_add_button = (By.XPATH, "//button[text() = 'Добавить сотрудника']")
+    employee_add_page_name = (By.XPATH, "//h1[text() = 'Добавление сотрудника']")
+    login_name = (By.XPATH, "//input[@name = 'loginName']")
+    surname = (By.XPATH, "//input[@name = 'surname']")
+    name = (By.XPATH, "//input[@name = 'name']")
+    patronymic = (By.XPATH, "//input[@name = 'patronymic']")
+    birth_date = (By.XPATH, "//div[@class ='datepicker']/input")
+    employee_email = (By.XPATH, "//input[@name = 'email']")
+    employee_grade = (By.XPATH, "//div[@class = 'label required' and text() = 'Грейд']/..//div[@class ='Select-input']")
+    employee_additional_button = (By.XPATH, "//button[@class = 'btn btn-link form-row-step form__toggle  ']")
+    surname_en = (By.XPATH, "//input[@name = 'surnameEn']")
+    name_en = (By.XPATH, "//input[@name = 'nameEn']")
+    patronymicEn = (By.XPATH, "//input[@name = 'patronymicEn']")
+    personnelNumber = (By.XPATH, "//input[@name = 'personnelNumber']")
+    position = (By.XPATH, "//input[@name = 'position']")
+    business_role = (By.XPATH, "//input[@name = 'businessRole']")
+    cell_phone = (By.XPATH, "//input[@name = 'cellPhone']")
+    budget_code = (By.XPATH, "//input[@name = 'budgetCode']")
+    business_unit = (By.XPATH, "//div[text() = 'Структурное подразделение']/..//div[@class = 'Select-input']")
+    system_clear_field = (By.XPATH, "//div[@class = 'Select-value']//span[text() = '×']")
+    system_role = (By.XPATH, "//div[text() = 'Системная роль']/..//div[@class = 'Select-input']")
+    assistant = (By.XPATH, "//div[text() = 'Ассистент']/..//div[@class = 'Select-input']")
+    add_approver_button = (By.XPATH, "//button[text() = 'Добавить утверждающего']")
+    add_finance_button = (By.XPATH, "//button[text() = 'Добавить сотрудника финансового отдела']")
+    add_approver = (By.XPATH, "//div[text() = 'Утверждающий']/..//div[@class = 'Select-input']")
+    add_finance = (By.XPATH, "//div[text() = 'Сотрудник финансового отдела']/..//div[@class = 'Select-input']")
+    employee_save_button = (By.XPATH, "//button[text() = 'Сохранить']")
+    # Справочники
+    grades_and_limits = (By.XPATH, "//*[text() = 'Грейды и лимиты']")
+    add_btn = (By.XPATH, "//button[text() = 'Добавить']")
+    grade_name = (By.XPATH, "//input[@name = 'name']")
+    grade_type = (By.XPATH, "//div[text() = 'Категория затрат']/..//div[@class = 'Select-input']//input")
+    grade_limit = (By.XPATH, "//input[@class = 'form-input' and contains(@name, 'limits')]")
+    grade_currency = (By.XPATH, "//div[text() = 'Валюта']/..//div[@class = 'Select-input']")
+    grade_save_btn = (By.XPATH, "//button[text() = 'Сохранить']")
+    name_table = (By.XPATH, "//tr//a")
+    checkbox = (By.XPATH, "//a[contains(text(), '{}')]/../..//input")
+    deactivate_activate = (By.XPATH, "//button[text() = 'Деактивировать/Восстановить']")
+    deactivate_activate_yes = (By.XPATH, "//button[text() = 'Да']")
+    grade_edit_page_h1 = (By.XPATH, "//h1[text() = 'Редактирование грейда']")
+    dictionaries = (By.XPATH, "//*[text() = 'Справочники']")
+    dict_bookkeeping = (By.XPATH, "//*[text() = 'Справочник счетов бухгалтерского учета']")
+    bookkeeping_num = (By.XPATH, "//input[@name = 'number']")
+    bookkeeping_name = (By.XPATH, "//input[@name = 'name']")
+    bookkeeping_desc = (By.XPATH, "//input[@name = 'description']")
+    bookkeeping_edit_page_h1 = (By.XPATH, "//h1[text() = 'Редактирование счета']")
+    dict_cost_category = (By.XPATH, "//*[text() = 'Справочник категорий затрат']")
+    cost_category_name = (By.XPATH, "//input[@name = 'name']")
+    cost_write_off = (By.XPATH, "//div[text() = 'Счет списания затрат']/..//div[@class = 'Select-input']//input")
+    cost_documents = (By.XPATH, "//div[text() = 'Отчетные документы']/..//div[@class = 'Select-input']//input")
+    cost_issue_form = (By.XPATH, "//div[text() = 'Форма выдачи']/..//div[@class = 'Select-input']//input")
+    saved_dict = "//*[text() = '{}']"
+    cost_category_edit_page_h1 = (By.XPATH, "//h1[text() = 'Редактирование категории затрат']")
+    dict_reporting_documents = (By.XPATH, "//*[text() = 'Справочник отчетных документов']")
+    rep_doc_name = (By.XPATH, "//input[@name = 'name']")
+    rep_doc_format = (By.XPATH, "//div[text() = 'Формат документа']/..//div[@class = 'Select-input']")
+    rep_doc_edit_page_h1 = (By.XPATH, "//h1[text() = 'Редактирование отчетного документа']")
+    dict_budget_codes = (By.XPATH, "//*[text() = 'Справочник бюджетных кодов']")
+    budget_code_name = (By.XPATH, "//input[@name = 'code']")
+    budget_code_page_edit_h1 = (By.XPATH, "//h1[text() = 'Редактирование бюджетного кода']")
+    dict_additional_parameters = (By.XPATH, "//*[text() = 'Справочник дополнительных параметров']")
+    parameter_name = (By.XPATH, "//input[@name = 'name']")
+    display_parameter = (By.XPATH, "//div[text() = 'Признак формы']/..//div[@class = 'Select-input']")
+    parameter_value = (By.XPATH, "//input[contains (@name, 'value')]")
+    additional_parameters_page_edit_h1 = (By.XPATH, "//h1[text() = 'Редактирование параметра']")
+    edit_company_page_h1 = (By.XPATH, "//h1[text() = 'Профиль компании']")
+    edit_employee_page_h1 = (By.XPATH, "//h1[text() = 'Редактирование сотрудника']")
+
+
+class UserLocators:
+    hometitle = (By.XPATH, "//div[@class = 'homeTitle']")
+    profile_name = (By.XPATH, "//div[@class = 'dropdown__toggle-button']")
+    my_trips = (By.XPATH, "//span[@class = 'menu-text' and text() = 'Мои командировки / Иные мероприятия']")
+    event_add_button = (By.XPATH, "//div[@class = 'col-xs-12 col-sm-3 col-lg-3 col-sm-offset-2 col-lg-offset-2 hidden-xs']//button[text() = 'Добавить']")
+    add_event_page_name = (By.XPATH, "//h1[text() = 'Редактирование командировки/иного мероприятия']")
+    check_cards = (By.XPATH, "//*[@class = 'card ']")
+    # Страница добавления командировки
+    assistant_checkbox = (By.XPATH, "//*[@class = 'checkbox-custom']")
+    assistant_employee = (By.XPATH, "//div[text() = 'ФИО сотрудника']/..//div[@class = 'Select-input']")
+    assistant_employee_disabled = (By.XPATH, "//div[text() = 'ФИО сотрудника']//..//*[@name= 'employee' and @disabled]")
+    not_assistant_card_menu = (By.XPATH, "//*[@class = 'card__row card__text']//*[@class = 'card__text' and not(text() = 'Тестовый Ассистент')]//ancestor::*[@class = 'card ']//*[@class = 'card__actions actions']")
+    not_assistant_card_comment = (By.XPATH,
+                               "//*[@class = 'card__row card__text']//*[@class = 'card__text' and not(text() = 'Тестовый Ассистент')]//ancestor::*[@class = 'card ']//*[@class = 'card__actions actions']//*[text() = 'Комментарий']")
+    assistant_employee_get_name = (By.XPATH, "//div[text() = 'ФИО сотрудника']/..//span[@role]")
+    assistant_employee_check_name = "//div[text() = 'ФИО сотрудника']/..//span[@role and text() = '{}']"
+    type_of_trip = (By.XPATH, "//div[text() = 'Тип командировки']/..//div[@class = 'Select-input']")
+    start_trip = (By.XPATH, "//div[text() = 'Дата начала командировки']//..//div[@class = 'datepicker']//input")
+    end_trip = (By.XPATH, "//div[text() = 'Дата окончания командировки']//..//div[@class = 'datepicker']//input")
+    start_city = (By.XPATH, "//div[text() = 'Город отбытия']//..//div[@class = 'Select-control']//input")
+    end_city = (By.XPATH, "//div[text() = 'Город прибывания']//..//div[@class = 'Select-control']//input")
+    budget_code = (By.XPATH, "//div[text() = 'Бюджетный код']//..//div[@class = 'Select-input']")
+    goal_description = (By.XPATH, "//input[@name = 'goalDescription']")
+    info = (By.XPATH, "//input[@name = 'info']")
+    trip_save_button = (By.XPATH, "//button[text() = 'Сохранить']")
+    trip_edit_page_name = (By.XPATH, "//h1[text() = 'Редактирование командировки/иного мероприятия']")
+    trip_status_new = (By.XPATH, "//div[@class = 'card__status heightBlock card__status--new' and text() = 'Новая']")
+    get_trip_card_name = (By.XPATH, "//*[@class = 'card__status card__text card__status--new']//..//*[@class = 'card__text']")
+    event_type = (By.XPATH, "//div[text() = 'Тип мероприятия']//..//div[@class = 'Select-input']")
+    other_event_start_date = (By.XPATH, "//div[text() = 'Дата']//..//div[@class = 'datepicker']//input")
+    other_event_card_text = (By.XPATH, "//div[@class = 'card__text' and contains(text(), 'Мероприятие')]")
+    get_expense_status_new = (By.XPATH, "//div[@class = 'card']//div[@class = 'card__status card__status--new' and text() = 'Новый']")
+    get_expense_status_approve = (By.XPATH, "//div[@class = 'card']//div[@class = 'card__status card__status--approve' and text() = 'На согласовании']/..//*[@class = 'card__text']")
+    menu_expense_status_approve = "//div[@class = 'card']//div[@class = 'card__status card__status--approve' and text() = 'На согласовании']/..//*[@class = 'card__text' and text() = '{}']/../..//*[@class = 'card__actions actions']"
+    menu_expense_cancel = "//div[@class = 'card']//div[@class = 'card__status card__status--approve' and text() = 'На согласовании']/..//*[@class = 'card__text' and text() = '{}']//ancestor::*[@class = 'card']//*[@class = 'actions__link' and text() = 'Отозвать']"
+    expense_canceled = "//*[@class = 'card__status card__status--revoked' and text() = 'Отозван']/..//*[@class = 'card__text' and text() = '{}']"
+    get_actual_expense_status_approve = (By.XPATH, "//div[@class = 'card']//div[@class = 'card__status card__status--approve' and text() = 'На согласовании']/..//*[@class = 'card__text']")
+    get_actual_expense_status_agreed = (By.XPATH, "//div[@class = 'card']//div[@class = 'card__status card__status--agreed' and text() = 'Согласован']/..//*[@class = 'card__text']")
+    get_planned_expense_status_agreed = (By.XPATH, "//*[@class = 'widthCard']//*[@class = 'card__status card__status--agreed' and text() = 'Согласован']//..//..//*[@class = 'card__price']")
+    copied_expense = "//*[@class = 'card']//*[contains(text(), '{}')]"
+    copy_expense_btn = (By.XPATH, "//button[text() = 'Скопировать в фактические расходы']")
+    planned_expense_checkbox = "//*[@class = 'card__price' and contains(text(), '{}')]//ancestor::*[@class = 'widthCard']//*[@class = 'card__status card__status--agreed' and text() = 'Согласован']//ancestor::*[@class = 'widthCard']//..//input[@type= 'checkbox' and not(@disabled)]"
+    expense_report_tab = (By.XPATH, "//li[text() = 'Авансовые отчеты']")
+    add_expense_report_button = (By.XPATH, "//button[@class= 'filter-form__submit filter-form__submit_overflow btn btn-primary btn-block' and text() = 'Добавить авансовый отчет']")
+    get_expense_report_status_new = (By.XPATH, "//*[@class = 'card__status card__status--new']//..//*[@class = 'advance-report-card__text']")
+    get_expense_report_status_on_approve = (By.XPATH, "//*[@class = 'card__status card__status--approve']//..//*[@class = 'advance-report-card__text']")
+    approve_expense_reports = (By.XPATH, "//span[@class = 'menu-text' and text() = 'Утверждение авансовых отчётов']")
+    get_expense_report_status_received = (By.XPATH, "//*[@class = 'card__status card__status--documents_received']")
+    menu_card_status_new = (By.XPATH, "//*[@class = 'card__status card__text card__status--new']//..//*[@class= 'card__actions actions']")
+    view_event = (By.XPATH, "//*[@class = 'card__status card__text card__status--new']//..//*[@class = 'actions__link' and text() = 'Просмотреть']")
+    delete_event = (By.XPATH, "//*[@class = 'card__status card__text card__status--new']//..//*[@class = 'actions__link' and text() = 'Удалить']")
+    check_deleted_trip = "//*[@class = 'card__status card__text card__status--new']//..//*[@class = 'card__text' and text()  = '{}']"
+    menu_copy_event = (By.XPATH,
+                            "//*[@class = 'card__status card__text card__status--new']//..//*[@class = 'actions__link' and text() = 'Копировать']")
+    copied_event_num = "//*[@class = 'card__text' and contains(text(), '{}')]"
+    event_goal_description = "//*[@name = 'goalDescription' and contains(@value, '{}')]"
+    copy_event_num = (By.XPATH, "//*[@name = 'eventNumber']")
+    get_trip_status_processing = (By.XPATH, "//*[@class = 'card__status card__text card__status--processing']//..//*[@class = 'card__text']")
+    get_trip_status_completed = (By.XPATH, "//*[@class = 'card__status card__text card__status--completed']//..//*[@class = 'card__text']")
+    view_trip_h1 = (By.XPATH, "//h1[text() = 'Просмотр командировки/иного мероприятия']")
+    # Формирование отчета о командировке
+    trip_report_tab = (By.XPATH, "//li[text() = 'Отчеты']")
+    generate_report = (By.XPATH, "//button[text() = 'Сформировать новый отчёт']")
+    checkbox_generate_all = (By.XPATH, "//input[@type = 'checkbox' and @name = 'all']")
+    generate_report_button = (By.XPATH, "//*[@class = 'btn btn-primary' and text() = 'Сформировать']")
+    wait_generating = (By.XPATH, "//*[contains(text(), 'Загрузка документа')]")
+    expense_row = (By.XPATH, "//td//span[text() = 'Заявки на расход']")
+    planned_expense = (By.XPATH, "//td//span[text() = 'Запланированные расходы']")
+    actual_expense_row = (By.XPATH, "//td//span[text() = 'Фактические расходы']")
+    expense_report_row = (By.XPATH, "//td//span[text() = 'Авансовые отчеты']")
+    report_save_button = (By.XPATH, "//*[@class = 'btn btn-primary' and text() = 'Сохранить']")
+    event_num = (By.XPATH, "//*[@name = 'eventNumber']")
+    check_report = (By.XPATH, "//*[@class = 'event-report-card']")
+    delete_report = (By.XPATH, "//*[@class = 'event-report-card']//*[@class = 'delete-button']")
+    get_report_name = (By.XPATH, "//*[@class = 'event-report-card']//a")
+    check_deleted_report = "//*[@class = 'event-report-card']//a[text() = '{}']"
+    # Заявки, отчеты, расходы
+    requests_reports = (By.XPATH, "//span[@class = 'menu-text' and text() = 'Заявки, отчеты, расходы']")
+    reports_requests_expenses = (By.XPATH, "//*[contains(text(), 'Выберите тип')]//..//div[@class = 'Select-input']")
+    expense_card = (By.XPATH, "//*[@class = 'card__text' and contains(text(), 'Заявка')]")
+    actual_expense_card = (By.XPATH, "//*[@class = 'card__text' and contains(text(), 'Расход')]")
+    expense_reports_card = (By.XPATH, "//*[@class = 'advance-report-card__text' and contains(text(), 'Отчет')]")
+    # Отчетность и статистика
+    new_report_generate = (By.XPATH, "//button[text() = 'Сформировать отчет']")
+    report_start_date = (By.XPATH, "//*[@class = 'modal']//*[text() = 'Дата с']//..//div[@class = 'datepicker']//input")
+    report_end_date = (By.XPATH, "//*[@class = 'modal']//*[text() = 'Дата по']//..//div[@class = 'datepicker']//input")
+    report_type = (By.XPATH, "//*[@class = 'col-xs-12 col-sm-4']//..//div[@class = 'Select-input']")
+    new_report_generate_button = (By.XPATH, "//*[@class = 'modal']//button[text() = 'Сформировать отчет']")
+    # Поля на странице командировки @disabled
+    type_of_event = (By.XPATH, "//*[@name = 'eventType' and @disabled]")
+    company_name = (By.XPATH, "//*[@name = 'companyId' and @disabled]")
+    autor = (By.XPATH, "//*[@name = 'authorId' and @disabled]")
+    sponsor_company = (By.XPATH, "//*[@name = 'sponsorCompanyId' and @disabled]")
+    event_number = (By.XPATH, "//*[@name = 'eventNumber' and @disabled]")
+    trip_type = (By.XPATH, "//*[@name = 'businessTripType' and @disabled]")
+    city_departure = (By.XPATH, "//*[@name = 'departureCity' and @disabled]")
+    city_arrival = (By.XPATH, "//*[@name = 'arrivalCity' and @disabled]")
+    goal = (By.XPATH, "//*[@name = 'goalDescription' and @disabled]")
+    additional_info = (By.XPATH, "//*[@name = 'info' and @disabled]")
+    # Поля на странице заявки на расход @disabled
+    cost_category = (By.XPATH, "//*[contains(@name, 'costCategoryId') and @disabled]")
+    cash_type = (By.XPATH, "//*[contains(@name, 'cashType') and @disabled]")
+    cash_value = (By.XPATH, "//*[contains(@name, 'value') and @disabled]")
+    cash_currency = (By.XPATH, "//*[contains(@name, 'currency') and @disabled]")
+    # Поля на странице фактического расхода @disabled
+    actual_cash_category = (By.XPATH, "//*[contains(@name, 'category') and @disabled]")
+    # Поля на странице АО @disabled
+    request_num = (By.XPATH, "//*[contains(@name, 'requestNumber') and @disabled]")
+    report_name = (By.XPATH, "//*[contains(@name, 'reportName') and @disabled]")
+    order_num = (By.XPATH, "//*[contains(@name, 'orderNumber') and @disabled]")
+    # Разделы левого бокового меню
+    reports_requests_expenses_section = (By.XPATH, "//*[@class = 'menu col']//*[contains(@href, 'requestsReportsConsumptions')]")
+    business_events = (By.XPATH, "//*[@class = 'menu col']//*[contains(@href, 'businessEventsApprove')]")
+    reporting_statistics = (By.XPATH, "//*[@class = 'menu col']//*[contains(@href, 'reports')]")
+    approve_expenses = (By.XPATH, "//*[@class = 'menu col']//*[contains(@href, 'consumptionRequestsApprove')]")
+    approve_actual_expenses = (By.XPATH, "//*[@class = 'menu col']//*[contains(@href, 'consumptionsApprove')]")
+    approve_expense_reports_menu = (By.XPATH, "//*[@class = 'menu col']//*[contains(@href, 'advanceReportsApprove')]")
+    my_trips_h1 = (By.XPATH, "//h1[text() = 'Мои командировки/Иные мероприятия']")
+    business_events_h1 = (By.XPATH, "//h1[text() = 'Командировки/Иные мероприятия']")
+    approve_expenses_h1 = (By.XPATH, "//h1[text() = 'Утверждение заявок']")
+    approve_actual_expenses_h1 = (By.XPATH, "//h1[text() = 'Утверждение фактических расходов']")
+    reports_requests_expenses_h1 = (By.XPATH, "//h1[text() = 'Заявки, отчеты, расходы']")
+    reporting_statistics_h1 = (By.XPATH, "//h1[text() = 'Отчетность и статистика']")
+    approve_expense_reports_h1 = (By.XPATH, "//h1[text() = 'Утверждение авансовых отчётов']")
+    profile_menu = (By.XPATH, "//*[@class= 'dropdown__toggle-button']")
+    profile_button = (By.XPATH, "//*[@class= 'header-menu__item']")
+    profile_h2 = (By.XPATH, "//h2[text() = 'Регистрационные данные']")
+    select_company = (By.XPATH, "//*[@class= 'header-menu__item' and text() = 'Сменить компанию']")
+    check_role = (By.XPATH, "//*[text() = 'Системная роль']//..//*[@role = 'option']")
+    user_role = (By.XPATH, "//*[@role = 'option' and text() = 'Пользователь']")
+    approver_role = (By.XPATH, "//*[@role = 'option' and contains(text(), 'Утверждающий')]")
+    financier_role = (By.XPATH, "//*[@role = 'option' and contains(text(), 'Сотрудник финансового отдела')]")
+    assistant_role = (By.XPATH, "//*[@role = 'option' and contains(text(), 'Ассистент. Имеет право создавать заявки за сотрудников')]")
+    reports_statistic_role = (By.XPATH, "//*[@role = 'option' and contains(text(), 'Отчетность и статистика')]")
+
+
+class ApproverFinancierLocators:
+    menu_card_another_author = "//*[@class = 'card__field']//*[@class = 'card__text' and not(contains(text(), '{}'))]//ancestor::*[@class = 'card ']//*[@class = 'card__actions actions']"
+    view_event_another_author = "//*[@class = 'card__field']//*[@class = 'card__text' and not(contains(text(), '{}'))]//ancestor::*[@class = 'card ']//*[@class = 'actions__link' and text() = 'Просмотреть']"
+    comment_event_another_author = "//*[@class = 'card__field']//*[@class = 'card__text' and not(contains(text(), '{}'))]//ancestor::*[@class = 'card ']//*[@class = 'actions__link' and text() = 'Комментарий']"
+    check_card = (By.XPATH, "//*[@class = 'card']")
+    check_exepnse_report_card = (By.XPATH, "//*[@class = 'advance-report-card']")
+    card_info = (By.XPATH, "//button[@class = 'card__switch ']")
+    card_info_goal = (By.XPATH, "//*[contains(text() , 'Описание цели')]//..//*[@class = 'card__text']")
+
+
+class Navigation:
+    go_to_my_trips = (By.XPATH, "//*[text() = 'Мои командировки / Иные мероприятия']")
+    go_to_business_events = (By.XPATH, "//*[text() = 'Командировки/Иные мероприятия']")
+    page_next_active = (By.XPATH, "//*[@class = 'pagination__item pagination__item_next']//*[text() = '→']")
+    business_events = (By.XPATH, "//*[text() = 'Командировки / Иные мероприятия']")
+    analytical_reports = (By.XPATH, "//*[@class = 'menu-text' and text() = 'Отчетность и статистика']")
+    page_prev_active = (By.XPATH, "//*[@class = 'pagination__item pagination__item_previous']//*[text() = '←']")
+    pagination_first_page = (By.XPATH, "//*[@class = 'pagination__btn' and text() = '1']")
+    select_company_modal = (By.XPATH, "//*[@class = 'select-company__container']")
+    select_company = (By.XPATH, "//*[text() = 'Выберите компанию']//..//*[@class = 'Select-control']")
+    select_company_choose = (By.XPATH, "//button[@class = 'btn btn-primary' and text() = 'Выбрать']")
+    first_company = (By.XPATH, "//*[@role = 'option' and contains(@id, '-option-0')]")
+    second_company = (By.XPATH, "//*[@role = 'option' and contains(@id, '-option-1')]")
+
+
+class Expense:
+    # Заявки на расход
+    expense_tab = (By.XPATH, "//li[text() = 'Заявки на расход']")
+    add_expense_button = (By.XPATH,
+                          "//button[text() = 'Добавить заявку']")
+    expense_type = (By.XPATH, "//div[text() = 'Категория затрат']//..//div[@class = 'Select-input']//input")
+    payment_type = (By.XPATH, "//div[text() = 'Тип наличных']//..//div[@class = 'Select-input']")
+    expense_sum = (By.XPATH, "//div[text() = 'Сумма']//..//input")
+    expense_currency = (By.XPATH, "//div[text() = 'Валюта']//..//div[@class = 'Select-input']")
+    expense_save_button = (By.XPATH, "//button[text() = 'Сохранить']")
+    expense_back_to_event = (By.XPATH, "//a[@class = 'breadcrumbs__crumb' and text() = 'Редактирование командировки']")
+    expense_card_name = (By.XPATH, "//div[@class = 'card']//div[@class = 'card__status card__status--new' and text() = 'Новый']/../..//*[@class = 'card__text']")
+    expense_report_card_name = (By.XPATH, "//div[@class = 'advance-report-card']//div[@class = 'card__status card__status--new' and text() = 'Новый']/../..//*[@class = 'advance-report-card__text']")
+    deleted_expense = "//div[@class = 'card']//div[@class = 'card__status card__status--new' and text() = 'Новый']/../..//*[@class = 'card__text' and text() = '{}']"
+    deleted_expense_report = "//div[@class = 'advance-report-card']//div[@class = 'card__status card__status--new' and text() = 'Новый']/../..//*[@class = 'advance-report-card__text' and text() = '{}']"
+    success_from_email = (By.XPATH, "//*[@class = 'message success' and text() = 'Операция успешно выполнена']")
+    agreed_expense_from_email = "//*[@class = 'card']//div[@class = 'card__status card__status--agreed' and text() = 'Согласован']//..//*[@class = 'card__text' and text() = '{}']"
+    rejected_expense_from_email = "//*[@class = 'card']//div[@class = 'card__status card__status--rejected' and text() = 'Отклонен']//..//*[@class = 'card__text' and text() = '{}']"
+    view_expense_h1 = (By.XPATH, "//h1[text() = 'Просмотр заявки на расход']")
+    # Фактические расходы
+    actual_expense_tab = (By.XPATH, "//li[text() = 'Фактические расходы']")
+    planned_expenses_tab = (By.XPATH, "//li[text() = 'Запланированные расходы']")
+    add_actual_expense_tab = (By.XPATH, "//div[@class = 'col-xs-12 col-sm-4 col-lg-3 col-sm-offset-8 col-lg-offset-9 hidden-xs']//button[text() = 'Добавить']")
+    payment_type_actual = (By.XPATH, "//div[text() = 'Форма оплаты']//..//div[@class = 'Select-input']")
+    payment_type_actual_cash = (By.XPATH, "//div[text() = 'Форма оплаты']//..//div[@class = 'Select-value']//*[text() = 'Наличные']")
+    document_name = (By.XPATH, "//div[text() = 'Наименование документа (расхода)']//..//div[@class = 'Select-input']//input")
+    document_num = (By.XPATH, "//input[@name = 'reportNumber']")
+    expense_date = (By.XPATH, "//div[text() = 'Дата расхода']//..//div[@class = 'datepicker']//input")
+    send_file = (By.XPATH, "//input[@type = 'file']")
+    approve_expense_page = (By.XPATH, "//span[@class = 'menu-text' and text() = 'Утверждение заявок на расход']")
+    approve_actual_expense_page = (By.XPATH, "//span[@class = 'menu-text' and text() = 'Утверждение фактических расходов']")
+    additional_data = (By.XPATH, "//button[text() = 'Дополнительные параметры']")
+    actual_expense_comment = (By.XPATH, "//*[@name =  'comment']")
+    rejected_actual_expense = (By.XPATH, "//div[@class = 'card']//div[@class = 'card__status card__status--rejected' and text() = 'Отклонен']/../..//*[@class = 'card__text']")
+    view_actual_expense_h1 = (By.XPATH, "//h1[text() = 'Просмотр фактического расхода']")
+
+    # Авансовый отчет
+    report_currency = (By.XPATH, "//div[text() = 'Валюта']//..//div[@class = 'Select-input']")
+    report_name = (By.XPATH, "//input[@name = 'reportName']")
+    report_order_num = (By.XPATH, "//input[@name = 'orderNumber']")
+    report_add_expense = (By.XPATH, "//button[text() = 'Добавить статью расхода']")
+    report_save_button = (By.XPATH, "//button[text() = 'Сохранить']")
+    report_status_sended_documents = (By.XPATH, "//*[@class = 'advance-report-card']//*[@class = 'card__status card__status--approve' and text() = 'Документы переданы в бухгалтерию']//..//*[@class = 'advance-report-card__text']")
+    agreed_expense_report_from_email = "//*[@class = 'advance-report-card']//*[@class = 'card__status card__status--agreed' and text() = 'Согласован']//..//*[@class = 'advance-report-card__text' and text() = '{}']"
+    rejected_expense_report_from_email = "//*[@class = 'advance-report-card']//*[@class = 'card__status card__status--rejected' and text() = 'Отклонен']//..//*[@class = 'advance-report-card__text' and text() = '{}']"
+    view_expense_report_h1 = (By.XPATH, "//h1[text() = 'Просмотр авансового отчета']")
+
+
+class Actions:
+    action = (By.XPATH, "//*[@class = 'card__actions actions']")
+    action_menu = (By.XPATH,
+              "//*[@class = 'card__name' and not(text() = 'Тест_инк')]//ancestor::*[@class = 'card ']//*[@class = 'card__actions actions']")
+    action_edit_trip = (By.XPATH, "//div[@class = 'actions__wrap']//a[@class ='actions__link' and  contains(@href, 'edit')]")
+    action_comment = (By.XPATH, "//div[@class = 'actions__wrap']//button[@class ='actions__link' and text() = 'Комментарий']")
+    action_comment_actual_expense = (By.XPATH, "//div[@class = 'actions__wrap']//button[@class ='actions__link' and text() = 'Добавить комментарий']")
+    action_view = (By.XPATH, "//*[@class = 'card__actions actions']//*[@class ='actions__link' and text() = 'Просмотреть']")
+    action_send_on_aprove = (By.XPATH, "//div[@class = 'card']//*[@class = 'card__status card__status--new']/../..//*[@class = 'card__actions actions']//button[text() = 'Отправить на согласование']")
+    new_expense_menu = (By.XPATH, "//div[@class = 'card']//*[@class = 'card__status card__status--new']/../..//*[@class = 'card__actions actions']")
+    rejected_expense_menu = (By.XPATH, "//div[@class = 'card']//*[@class = 'card__status card__status--rejected']/../..//*[@class = 'card__actions actions']")
+    rejected_expense_send = (By.XPATH, "//div[@class = 'card']//*[@class = 'card__status card__status--rejected']/../..//*[@class = 'card__actions actions']//button[text() = 'Отправить на согласование']")
+    new_expense_delete = (By.XPATH, "//div[@class = 'card']//*[@class = 'card__status card__status--new']/../..//*[@class = 'card__actions actions']//button[text() = 'Удалить']")
+    action_report_menu = (By.XPATH, "//div[@class ='advance-report-card__actions actions']")
+    action_new_report_menu = (By.XPATH, "//*[@class = 'card__status card__status--new' and text() = 'Новый']//ancestor::*[@class = 'advance-report-card']//*[text() = 'Действия']")
+    action_new_report_delete = (By.XPATH, "//*[@class = 'card__status card__status--new' and text() = 'Новый']//ancestor::*[@class = 'advance-report-card']//*[text() = 'Удалить']")
+    expense_report_view = (By.XPATH, "//div[@class ='advance-report-card__actions actions']//*[@class = 'actions__link' and text() = 'Просмотреть']")
+    go_to_event_from_expense_report = (By.XPATH, "//div[@class ='advance-report-card__actions actions']//*[@class = 'actions__link' and text() = 'Перейти к командировке/иному мероприятию']")
+    delete_expense_report = (By.XPATH, "//div[@class ='advance-report-card__actions actions']//*[@class = 'actions__link' and text() = 'Удалить']")
+    action_comment_report = (By.XPATH, "//div[@class = 'actions__wrap']//button[@class ='actions__link' and text() = 'Добавить комментарий']")
+    menu_edit = (By.XPATH, "//div[@class ='card__actions actions']//a[text() = 'Редактировать']")
+    company_inn_kpp = (By.XPATH, "//*[@class= 'card__text card__text--right']")
+    select_drop_menu = "//*[contains (text(), '{}')]//ancestor::*[@class = 'card ']//*[@class = 'card__actions actions']"
+    select_drop_menu_deactivate = "//*[contains (text(), '{}')]//ancestor::*[@class = 'card ']//*[@class = 'card__actions actions']//button[text() = 'Деактивировать']"
+    disabled_company_menu = "//*[contains (text(), '{}')]//ancestor::*[@class = 'card card--disabled']//*[@class = 'card__actions actions']"
+    select_drop_menu_activate = "//*[contains (text(), '{}')]//ancestor::*[@class = 'card card--disabled']//*[@class = 'card__actions actions']//button[text() = 'Активировать']"
+    activated_company = "//*[@class= 'card__text card__text--right' and text() = '{}']"
+    menu_disable_notifications = "//*[contains (text(), '{}')]//ancestor::*[@class = 'card ']//button[text() = 'Отключить уведомления']"
+    menu_enable_notifications = "//*[contains (text(), '{}')]//ancestor::*[@class = 'card ']//button[text() = 'Включить уведомления']"
+    notifications_icon = "//*[contains (text(), '{}')]//ancestor::*[@class = 'card__row']//*[contains(@class, 'notification')]"
+    test_inc_menu = (By.XPATH, "//*[contains (text(), 'Тест_инк')]//ancestor::*[@class = 'card ']//*[@class = 'card__actions actions']")
+    test_inc_choose = (By.XPATH, "//*[contains (text(), 'Тест_инк')]//ancestor::*[@class = 'card ']//*[@class = 'actions__link ' and text() = 'Выбрать']")
+    find_cards = (By.XPATH, "//*[@class = 'card ']")
+    go_to_event_from_expense = (By.XPATH, "//*[@class ='card__actions actions']//*[@class = 'actions__link' and text() = 'Перейти к командировке/иному мероприятию']")
+
+
+class Comments:
+    comment_h2 = (By.XPATH, "//div[@class = 'modal__h2' and contains(text(), 'Комментари')]")
+    text = (By.XPATH, "//textarea[@placeholder = 'Укажите комментарий']")
+    add_comment = (By.XPATH, "//button[@class = 'btn btn-primary' and text() = 'Добавить комментарий']")
+    comment_close = (By.XPATH, "//button[text() = 'Закрыть']")
+    added_comment = (By.XPATH, "//button[@class = 'card__notification']")
+    added_comment_modal = "//div[@class = 'card__row chat-item__message' and text() = '{}']"
+
+
+class ProgressModal:
+    modal_save_progress = (By.XPATH, "//div[@class = 'modal--approve']//*[@class = 'modal__h2' and text() = 'Сохранить изменения?']")
+    modal_success_planned = (By.XPATH, "//*[@class = 'modal--approve']//*[@class = 'modal__h2' and text() = 'Расход успешно скопирован']")
+    modal_button_no = (By.XPATH, "//div[@class = 'modal--approve']//button[text() = 'Нет']")
+    modal_button_yes = (By.XPATH, "//div[@class = 'modal--approve']//button[text() = 'Да']")
+    modal_button_ok = (By.XPATH, "//*[@class = 'modal--approve']//button[text() = 'ОК']")
+    modal_send_on_aprove = (By.XPATH, "//div[@class = 'modal--approve']//*[@class = 'modal__h2' and contains (text(), 'на согласование?')]")
+    modal_approve = (By.XPATH, "//*[@class = 'modal__h2' and contains (text(), 'Вы точно хотите согласовать')]")
+    modal_reject = (By.XPATH, "//*[@class = 'modal__h2' and contains (text(), 'Вы точно хотите отклонить')]")
+    modal_rejected = (By.XPATH, "//*[@class = 'modal__h2' and contains (text(), 'успешно отклонен')]")
+    modal_comment = (By.XPATH, "//textarea")
+    modal_approve_yes = (By.XPATH, "//button[@class = 'btn btn-primary']")
+    agreed_expense = (By.XPATH, "//button[@class = 'card__notification']")
+    agreed_expense_close_button = (By.XPATH, "//button[@class = 'btn btn-default' and text() = 'Закрыть']")
+    modal_h2 = (By.XPATH, "//*[@class = 'modal__h2']")
+    modal_approve_report_yes = (By.XPATH, "//*[@class = 'modal__buttons spaced-buttons']//*[@class = 'btn btn-primary']")
+    modal_approve_report_close = (By.XPATH, "//*[@class = 'modal__buttons spaced-buttons']//*[@class = 'btn btn-default']")
+    modal_complete_trip = (By.XPATH, "//*[@class = 'modal__h2' and contains (text(), 'Вы точно хотите завершить командировку')]")
+    modal_generate_report_h2 = (By.XPATH, "//*[@class = 'modal__h2' and text() = 'Формирование отчёта']")
+    modal_select_company_h2 = (By.XPATH, "//*[@class= 'modal__h2' and text() = 'Вы уверены? Несохраненные данные будут утеряны!']")
+    select_company_button = (By.XPATH, "//button[text() = 'Сменить компанию']")
+
+
+class LoginPage(StartPage):
+    def go_to_mainpage(self):
+        StartPage.open_site(self)
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        self.find_element(LoginPageLocators.domain_field)
+        self.find_element(LoginPageLocators.login_field)
+        self.find_element(LoginPageLocators.password_field)
+        url = self.driver.current_url
+        return url
+
+    def password_link(self):
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        link = self.find_element(LoginPageLocators.reset_password)
+        link.click()
+        self.find_element(LoginPageLocators.email_field)
+        url = self.driver.current_url
+        return url
+
+    def back_to_login_page(self):
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        link = self.find_element(LoginPageLocators.reset_password)
+        link.click()
+        self.find_element(LoginPageLocators.email_field)
+        back_to_login = self.find_element(LoginPageLocators.back_to_login)
+        back_to_login.click()
+        url = self.driver.current_url
+        return url
+
+    def reset_password(self):
+        gmail_fin1.DeleteMessage()
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        link = self.find_element(LoginPageLocators.reset_password)
+        link.click()
+        url = self.driver.current_url + 'test_inc'
+        self.driver.get(url)
+        self.find_element(LoginPageLocators.email_field).send_keys(UsersData.financier_email)
+        self.find_element(LoginPageLocators.send_password_btn).click()
+        message = gmail_fin1.GetMimeMessage()
+        if len(message) > 0:
+            self.driver.get(message[0])
+            self.find_element(LoginPageLocators.password_confirmation).send_keys('12345')
+            self.find_element(LoginPageLocators.password).send_keys('12345')
+            self.find_element(LoginPageLocators.change_password_btn).click()
+        try:
+            changed_pass = self.find_element(LoginPageLocators.start_page_h1)
+        except TimeoutException:
+            print('Письмо не было получено')
+            changed_pass = self.find_element(LoginPageLocators.start_page_h1)
+        return changed_pass
+
+
+class AllUsersLogin(StartPage):
+    def super_admin(self):
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        domain = self.find_element(LoginPageLocators.domain_field)
+        domain.clear()
+        login = self.find_element(LoginPageLocators.login_field)
+        login.clear()
+        login.send_keys(UsersData.super_admin_login)
+        password = self.find_element(LoginPageLocators.password_field)
+        password.clear()
+        password.send_keys(UsersData.super_admin_password)
+        login_button = self.find_element((By.XPATH, "//button[text()='Войти']"))
+        login_button.click()
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        profile_name = self.find_element(SuperAdminLocators.profile_name).text
+        super_admin_start_page = self.find_element(SuperAdminLocators.group_of_companies).text
+        return super_admin_start_page, profile_name
+
+    def admin(self):
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        domain = self.find_element(LoginPageLocators.domain_field)
+        domain.clear()
+        domain.send_keys(UsersData.domain)
+        login = self.find_element(LoginPageLocators.login_field)
+        login.clear()
+        login.send_keys(UsersData.admin_login)
+        password = self.find_element(LoginPageLocators.password_field)
+        password.clear()
+        password.send_keys(UsersData.admin_password)
+        login_button = self.find_element((By.XPATH, "//button[text()='Войти']"))
+        login_button.click()
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        profile_name = self.find_element(SuperAdminLocators.profile_name).text
+        admin_start_page = self.find_element(AdminLocators.companies_list).text
+        return admin_start_page, profile_name
+
+    def user(self):
+        try:
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            domain = self.find_element(LoginPageLocators.domain_field)
+            domain.clear()
+            domain.send_keys(UsersData.domain)
+            login = self.find_element(LoginPageLocators.login_field)
+            login.clear()
+            login.send_keys(UsersData.user_login)
+            password = self.find_element(LoginPageLocators.password_field)
+            password.clear()
+            password.send_keys(UsersData.user_password)
+            login_button = self.find_element((By.XPATH, "//button[text()='Войти']"))
+            login_button.click()
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            hometitle = self.find_element(UserLocators.hometitle).text
+            self.find_element(UserLocators.profile_menu).click()
+            self.find_element(UserLocators.profile_button).click()
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            role = self.find_element(UserLocators.check_role).text
+        finally:
+            self.driver.get(start_url)
+        return hometitle, role
+
+    def approver(self):
+        try:
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            domain = self.find_element(LoginPageLocators.domain_field)
+            domain.clear()
+            domain.send_keys(UsersData.domain)
+            login = self.find_element(LoginPageLocators.login_field)
+            login.clear()
+            login.send_keys(UsersData.approver_login)
+            password = self.find_element(LoginPageLocators.password_field)
+            password.clear()
+            password.send_keys(UsersData.approver_password)
+            login_button = self.find_element((By.XPATH, "//button[text()='Войти']"))
+            login_button.click()
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            hometitle = self.find_element(UserLocators.hometitle).text
+            self.find_element(UserLocators.profile_menu).click()
+            self.find_element(UserLocators.profile_button).click()
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            role = self.find_element(UserLocators.check_role).text
+        finally:
+            self.driver.get(start_url)
+        return hometitle, role
+
+    def financier(self):
+        try:
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            domain = self.find_element(LoginPageLocators.domain_field)
+            domain.clear()
+            domain.send_keys(UsersData.domain)
+            login = self.find_element(LoginPageLocators.login_field)
+            login.clear()
+            login.send_keys(UsersData.financier_login)
+            password = self.find_element(LoginPageLocators.password_field)
+            password.clear()
+            password.send_keys(UsersData.financier_password)
+            login_button = self.find_element((By.XPATH, "//button[text()='Войти']"))
+            login_button.click()
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            hometitle = self.find_element(UserLocators.hometitle).text
+            self.find_element(UserLocators.profile_menu).click()
+            self.find_element(UserLocators.profile_button).click()
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            role = self.find_element(UserLocators.check_role).text
+        finally:
+            self.driver.get(start_url)
+        return hometitle, role
+
+    def reports(self):
+        try:
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            domain = self.find_element(LoginPageLocators.domain_field)
+            domain.clear()
+            domain.send_keys(UsersData.domain)
+            login = self.find_element(LoginPageLocators.login_field)
+            login.clear()
+            login.send_keys(UsersData.reports_login)
+            password = self.find_element(LoginPageLocators.password_field)
+            password.clear()
+            password.send_keys(UsersData.reports_password)
+            login_button = self.find_element((By.XPATH, "//button[text()='Войти']"))
+            login_button.click()
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            hometitle = self.find_element(UserLocators.hometitle).text
+            self.find_element(UserLocators.profile_menu).click()
+            self.find_element(UserLocators.profile_button).click()
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            role = self.find_element(UserLocators.check_role).text
+        finally:
+            self.driver.get(start_url)
+        return hometitle, role
+
+    def assistant(self):
+        try:
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            domain = self.find_element(LoginPageLocators.domain_field)
+            domain.clear()
+            domain.send_keys(UsersData.domain)
+            login = self.find_element(LoginPageLocators.login_field)
+            login.clear()
+            login.send_keys(UsersData.assistant_login)
+            password = self.find_element(LoginPageLocators.password_field)
+            password.clear()
+            password.send_keys(UsersData.assistant_password)
+            login_button = self.find_element((By.XPATH, "//button[text()='Войти']"))
+            login_button.click()
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            hometitle = self.find_element(UserLocators.hometitle).text
+            self.find_element(UserLocators.profile_menu).click()
+            self.find_element(UserLocators.profile_button).click()
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            role = self.find_element(UserLocators.check_role).text
+        finally:
+            self.driver.get(start_url)
+        return hometitle, role
+
+    def multiaccount(self):
+        roles = []
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        domain = self.find_element(LoginPageLocators.domain_field)
+        domain.clear()
+        domain.send_keys(UsersData.domain)
+        login = self.find_element(LoginPageLocators.login_field)
+        login.clear()
+        login.send_keys(UsersData.multiaccount_login)
+        password = self.find_element(LoginPageLocators.password_field)
+        password.clear()
+        password.send_keys(UsersData.multiaccount_password)
+        login_button = self.find_element((By.XPATH, "//button[text()='Войти']"))
+        login_button.click()
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        try:
+            self.find_element(Navigation.select_company_modal)
+            select_company = self.find_element(Navigation.select_company)
+            action = self.action_chains()
+            action.click(select_company)
+            action.perform()
+            action = self.action_chains()
+            action.pause(0.2)
+            action.move_to_element(self.find_element(Navigation.first_company)).click()
+            action.perform()
+            self.find_element(Navigation.select_company_choose).click()
+        except TimeoutException:
+            print('Не удалось найти окно с выбором компании')
+            self.find_element(Navigation.select_company_modal)
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        self.find_element(UserLocators.profile_menu).click()
+        self.find_element(UserLocators.profile_button).click()
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        self.find_element(UserLocators.profile_h2)
+        role = self.find_element(UserLocators.check_role)
+        first_role = role.text
+        role.click()
+        roles.append(first_role)
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        self.find_element(UserLocators.profile_menu).click()
+        self.find_element(UserLocators.select_company).click()
+        self.find_element(ProgressModal.modal_select_company_h2)
+        self.find_element(ProgressModal.select_company_button).click()
+        try:
+            self.find_element(Navigation.select_company_modal)
+            select_company = self.find_element(Navigation.select_company)
+            action = self.action_chains()
+            action.click(select_company)
+            action.perform()
+            action = self.action_chains()
+            action.pause(0.2)
+            action.move_to_element(self.find_element(Navigation.second_company)).click()
+            action.perform()
+            self.find_element(Navigation.select_company_choose).click()
+        except TimeoutException:
+            print('Не удалось найти окно с выбором компании')
+            self.find_element(Navigation.select_company_modal)
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        self.find_element(UserLocators.profile_menu).click()
+        self.find_element(UserLocators.profile_button).click()
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        self.find_element(UserLocators.profile_h2)
+        role = self.find_element(UserLocators.check_role)
+        second_role = role.text
+        role.click()
+        roles.append(second_role)
+        roles = [role.rstrip('\n ') for role in roles]
+        return roles
+
+    def logout(self, testrail_case_id):
+        try:
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            logout = self.find_element(LoginPageLocators.logout_icon)
+            logout.click()
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            self.find_element(LoginPageLocators.domain_field)
+            url = self.driver.current_url
+            print('Удалось выполнить логаут из системы после авторизации {}'.format(testrail_case_id))
+            return url
+        except TimeoutException:
+            self.driver.get(start_url)
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            logout = self.find_element(LoginPageLocators.logout_icon)
+            logout.click()
+            self.find_element_invisible_off(HeaderLocators.modal_loader)
+            self.find_element(LoginPageLocators.domain_field)
+
+    def back_to_login_page(self):
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        self.open_site()
+        self.find_element_invisible_off(HeaderLocators.modal_loader)
+        self.find_element(LoginPageLocators.domain_field)
+        self.find_element(LoginPageLocators.login_field)
+        self.find_element(LoginPageLocators.password_field)
+        url = self.driver.current_url
+        return url
+
