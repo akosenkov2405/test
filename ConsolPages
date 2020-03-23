@@ -10,9 +10,9 @@ from datetime import date
 from selenium.common.exceptions import TimeoutException
 from selenium.common.exceptions import ElementClickInterceptedException
 
-admin_start_url = 'https://demo_ems.continent.ru/#/domains'
-start_url = 'https://demo_ems.continent.ru/#/home'
-start_login_url = 'https://demo_ems.continent.ru/#/login'
+admin_start_url = 'урл проекта'
+start_url = 'урл'
+start_login_url = 'урл'
 
 
 class UsersData:
